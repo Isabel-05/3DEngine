@@ -4,7 +4,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <iostream>
 #include <sstream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
