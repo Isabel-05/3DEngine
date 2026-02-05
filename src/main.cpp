@@ -1,58 +1,10 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <iostream>
-#include <sstream>
+#include "Camera.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
-std::string parseShader(const std::string& file)
-{
-    std::ifstream stream;
-    stream.open(file);
-    if(stream.fail())
-    {
-        std::cout << "failed to open file";
-        return std::string("");
-    }
-    std::stringstream buffer;
-    buffer << stream.rdbuf();
-    return buffer.str();
-}
-
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
-
-float vertices[] = 
-{
-    0.5 , -0.5, -0.5,
-    0.5 , -0.5, 0.5 ,
-    -0.5, -0.5, 0.5 ,
-    -0.5, -0.5, -0.5,
-    0.5 , 0.5 , -0.5,
-    0.5 , 0.5 , 0.5 ,
-    -0.5, 0.5 , 0.5 ,
-    -0.5, 0.5 , -0.5
-};
-
-GLuint indices[] = {
-    1, 2, 3,
-    1, 3, 4,
-    5, 8, 7,
-    5, 7, 6,
-    1, 5, 6,
-    1, 6, 2,
-    2, 6, 7,
-    2, 7, 3,
-    3 ,7, 8,
-    3, 8, 4,
-    4, 8, 5,
-    4, 5, 1
-};
 
 int main()
 {
@@ -84,50 +36,38 @@ int main()
         return -1;
     }
 
-    // build and compile shader program
-    std::string vertexShaderTemp = parseShader("/Users/admin/Documents/Dev/OpenGL/3DModel_Viewer/shaders/VertexShader.shader");
-    const char* vertexShaderSource = vertexShaderTemp.c_str();
-    std::string fragmentShaderTemp = parseShader("/Users/admin/Documents/Dev/OpenGL/3DModel_Viewer/shaders/FragmentShader.shader");
-    const char* fragmentShaderSource = fragmentShaderTemp.c_str();
+    //Load and Compile Shaders
+    std::string vertShaderFile = "/Users/admin/Documents/Dev/OpenGL/3DModel_Viewer/shaders/VertexShader.shader";
+    std::string fragShaderFile = "/Users/admin/Documents/Dev/OpenGL/3DModel_Viewer/shaders/FragmentShader.shader";
+    Shader shaderProgram(vertShaderFile,fragShaderFile);
 
-    // vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // fragment shader
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // link shaders
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    // check for linking errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    float vertices[] = 
+        {
+            0.5 , -0.5, -0.5,
+            0.5 , -0.5, 0.5 ,
+            -0.5, -0.5, 0.5 ,
+            -0.5, -0.5, -0.5,
+            0.5 , 0.5 , -0.5,
+            0.5 , 0.5 , 0.5 ,
+            -0.5, 0.5 , 0.5 ,
+            -0.5, 0.5 , -0.5
+        };
 
+    GLuint indices[] =
+        {
+            4, 5, 6,
+            4, 6, 7,
+            0, 2, 1,
+            0, 3, 2,
+            0, 7, 3,
+            0, 4, 7,
+            1, 2, 6,
+            1, 6, 5,
+            3, 7, 6,
+            3, 6, 2,
+            0, 1, 5,
+            0, 5, 4
+        };
 
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
@@ -148,14 +88,16 @@ int main()
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0); 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // Wireframe Mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    Camera camera(SCR_WIDTH,SCR_HEIGHT, glm::vec3(0.0f, 0.0f, 2.0f));
 
 
     // render loop
@@ -168,11 +110,13 @@ int main()
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // draw triangles
-        glUseProgram(shaderProgram);
+        shaderProgram.Activate();
+		camera.Inputs(window);
+		// Updates and exports the camera matrix to the Vertex Shader
+		camera.Matrix(45.0f, 0.1f, 100.0f, shaderProgram, "camMatrix");
+
         glBindVertexArray(VAO); 
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
         glBindVertexArray(0); 
  
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -184,7 +128,7 @@ int main()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &IBO);
-    glDeleteProgram(shaderProgram);
+    shaderProgram.Delete();
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
