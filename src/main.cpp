@@ -1,4 +1,14 @@
+<<<<<<< HEAD:src/main.cpp
 #include "Camera.h"
+=======
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+>>>>>>> eb9c31aff5fb5ec46236863f9e976bf0d898d4fe:main.cpp
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
